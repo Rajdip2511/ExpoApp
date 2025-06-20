@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { JWTPayload } from '../types';
 
 // Define User type locally until Prisma types are available
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
