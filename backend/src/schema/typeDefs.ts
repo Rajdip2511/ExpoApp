@@ -76,10 +76,5 @@ export const typeDefs = `#graphql
     leaveEvent(eventId: ID!): Event!
   }
 
-  type Subscription {
-    # Real-time event updates
-    eventUpdated(eventId: ID!): Event!
-    userJoinedEvent(eventId: ID!): User!
-    userLeftEvent(eventId: ID!): ID!
-  }
+
 `; 

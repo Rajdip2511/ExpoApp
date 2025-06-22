@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { Server as SocketIOServer } from 'socket.io';
 import { verifyToken, extractTokenFromHeader } from '../utils/auth';
 import prisma from '../utils/database';
 import { Context } from '../types';
@@ -58,15 +59,17 @@ export const authenticateToken = async (
 };
 
 /**
- * Create GraphQL context with authenticated user
+ * Create GraphQL context with authenticated user and Socket.io server
  */
-export const createContext = ({ req, res }: { req: AuthenticatedRequest; res: Response }): Context => {
-  return {
-    user: req.user,
-    req,
-    res,
+export const createContext = (io?: SocketIOServer) => 
+  async ({ req, res }: { req: AuthenticatedRequest; res: Response }): Promise<Context> => {
+    return {
+      user: req.user,
+      req,
+      res,
+      io, // Include Socket.io server instance
+    };
   };
-};
 
 /**
  * Middleware to require authentication

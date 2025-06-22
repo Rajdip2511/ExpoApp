@@ -1,110 +1,78 @@
 import { PrismaClient } from '@prisma/client';
-import { hashPassword, generateAvatarUrl } from '../src/utils/auth';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seeding...');
+  console.log('🌱 Starting database seeding (Static Token Auth)...');
 
-  // Clean existing data
-  console.log('🧹 Cleaning existing data...');
-  await prisma.event.deleteMany();
+  // Clear existing data
   await prisma.user.deleteMany();
+  await prisma.event.deleteMany();
 
-  // Create sample users
-  console.log('👥 Creating sample users...');
-  
+  // Create users with static token IDs (matching authentication)
   const users = await Promise.all([
     prisma.user.create({
       data: {
-        name: 'John Doe',
-        email: 'john@example.com',
-        password: await hashPassword('password123'),
-        avatar: generateAvatarUrl('John Doe'),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        password: await hashPassword('password123'),
-        avatar: generateAvatarUrl('Jane Smith'),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'Alice Johnson',
-        email: 'alice@example.com',
-        password: await hashPassword('password123'),
-        avatar: generateAvatarUrl('Alice Johnson'),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'Bob Wilson',
-        email: 'bob@example.com',
-        password: await hashPassword('password123'),
-        avatar: generateAvatarUrl('Bob Wilson'),
-      },
-    }),
-    prisma.user.create({
-      data: {
+        id: 'demo-user-id',
         name: 'Demo User',
         email: 'demo@example.com',
-        password: await hashPassword('password123'),
-        avatar: generateAvatarUrl('Demo User'),
+      },
+    }),
+    prisma.user.create({
+      data: {
+        id: 'john-user-id',
+        name: 'John Smith',
+        email: 'john@example.com',
+      },
+    }),
+    prisma.user.create({
+      data: {
+        id: 'jane-user-id',
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+      },
+    }),
+    prisma.user.create({
+      data: {
+        id: 'alice-user-id',
+        name: 'Alice Johnson',
+        email: 'alice@example.com',
+      },
+    }),
+    prisma.user.create({
+      data: {
+        id: 'bob-user-id',
+        name: 'Bob Wilson',
+        email: 'bob@example.com',
       },
     }),
   ]);
 
-  console.log(`✅ Created ${users.length} users`);
+  console.log('✅ Created users:', users.map(u => u.email).join(', '));
 
   // Create sample events
-  console.log('🎉 Creating sample events...');
-  
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(19, 0, 0, 0);
+
+  const nextWeek = new Date();
+  nextWeek.setDate(nextWeek.getDate() + 7);
+  nextWeek.setHours(14, 0, 0, 0);
+
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  nextMonth.setHours(18, 30, 0, 0);
+
   const events = await Promise.all([
     prisma.event.create({
       data: {
-        name: 'Tech Conference 2025',
-        description: 'Annual technology conference featuring the latest innovations in software development, AI, and cybersecurity.',
-        location: 'San Francisco Convention Center',
-        startTime: new Date('2025-03-15T09:00:00Z'),
-        endTime: new Date('2025-03-15T18:00:00Z'),
+        name: 'React Native Meetup',
+        location: 'Tech Hub, Downtown',
+        startTime: tomorrow,
         attendees: {
           connect: [
             { id: users[0].id },
             { id: users[1].id },
-            { id: users[4].id },
-          ],
-        },
-      },
-    }),
-    prisma.event.create({
-      data: {
-        name: 'College Music Festival',
-        description: 'A vibrant music festival featuring local bands and student performances.',
-        location: 'University Campus Amphitheater',
-        startTime: new Date('2025-04-20T14:00:00Z'),
-        endTime: new Date('2025-04-20T23:00:00Z'),
-        attendees: {
-          connect: [
-            { id: users[1].id },
-            { id: users[2].id },
-            { id: users[3].id },
-          ],
-        },
-      },
-    }),
-    prisma.event.create({
-      data: {
-        name: 'Open Mic Night',
-        description: 'Monthly open mic event for aspiring comedians, poets, and musicians.',
-        location: 'Downtown Coffee House',
-        startTime: new Date('2025-02-28T19:00:00Z'),
-        endTime: new Date('2025-02-28T22:00:00Z'),
-        attendees: {
-          connect: [
-            { id: users[0].id },
             { id: users[2].id },
           ],
         },
@@ -112,13 +80,12 @@ async function main() {
     }),
     prisma.event.create({
       data: {
-        name: 'Startup Pitch Competition',
-        description: 'Entrepreneurs present their innovative ideas to a panel of investors.',
-        location: 'Business Innovation Hub',
-        startTime: new Date('2025-05-10T10:00:00Z'),
-        endTime: new Date('2025-05-10T16:00:00Z'),
+        name: 'GraphQL Workshop',
+        location: 'Innovation Center, 2nd Floor',
+        startTime: nextWeek,
         attendees: {
           connect: [
+            { id: users[1].id },
             { id: users[3].id },
             { id: users[4].id },
           ],
@@ -127,16 +94,25 @@ async function main() {
     }),
     prisma.event.create({
       data: {
-        name: 'Community Food Festival',
-        description: 'Celebrate local cuisine with food trucks, cooking demonstrations, and live entertainment.',
-        location: 'Central Park',
-        startTime: new Date('2025-06-15T11:00:00Z'),
-        endTime: new Date('2025-06-15T20:00:00Z'),
+        name: 'TypeScript Deep Dive',
+        location: 'Virtual Event (Zoom)',
+        startTime: nextMonth,
+        attendees: {
+          connect: [
+            { id: users[2].id },
+            { id: users[4].id },
+          ],
+        },
+      },
+    }),
+    prisma.event.create({
+      data: {
+        name: 'Web3 & Blockchain Seminar',
+        location: 'Blockchain Hub, Conference Room A',
+        startTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
         attendees: {
           connect: [
             { id: users[0].id },
-            { id: users[1].id },
-            { id: users[2].id },
             { id: users[3].id },
           ],
         },
@@ -144,46 +120,87 @@ async function main() {
     }),
     prisma.event.create({
       data: {
-        name: 'AI & Machine Learning Workshop',
-        description: 'Hands-on workshop covering the fundamentals of AI and machine learning.',
-        location: 'Tech University Lab Building',
-        startTime: new Date('2025-07-22T09:00:00Z'),
-        endTime: new Date('2025-07-22T17:00:00Z'),
+        name: 'Open Source Contribution Workshop',
+        location: 'Community Center, Main Hall',
+        startTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
         attendees: {
           connect: [
-            { id: users[4].id },
+            { id: users[1].id },
           ],
+        },
+      },
+    }),
+    prisma.event.create({
+      data: {
+        name: 'AI/ML for Developers',
+        location: 'AI Research Lab, Building B',
+        startTime: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
+        attendees: {
+          connect: [],
         },
       },
     }),
   ]);
 
-  console.log(`✅ Created ${events.length} events`);
+  console.log('✅ Created events:', events.map(e => e.name).join(', '));
 
-  // Log summary
-  console.log('\n📊 Seeding Summary:');
-  console.log(`👥 Users: ${users.length}`);
-  console.log(`🎉 Events: ${events.length}`);
-  
-  console.log('\n🔐 Sample Login Credentials:');
-  console.log('Email: demo@example.com');
-  console.log('Password: password123');
-  
-  console.log('\n📧 All users have the same password: password123');
-  console.log('Available emails:');
-  users.forEach(user => {
-    console.log(`  - ${user.email}`);
+  // Create some additional attendee relationships
+  await prisma.event.update({
+    where: { id: events[0].id },
+    data: {
+      attendees: {
+        connect: [
+          { id: users[3].id },
+          { id: users[4].id },
+        ],
+      },
+    },
   });
 
-  console.log('\n✅ Database seeding completed!');
+  await prisma.event.update({
+    where: { id: events[5].id },
+    data: {
+      attendees: {
+        connect: [
+          { id: users[0].id },
+          { id: users[2].id },
+          { id: users[4].id },
+        ],
+      },
+    },
+  });
+
+  console.log('✅ Updated event attendees');
+
+  // Print summary
+  const totalUsers = await prisma.user.count();
+  const totalEvents = await prisma.event.count();
+  
+  console.log('');
+  console.log('🎉 Database seeding completed! (Static Token Auth)');
+  console.log(`📊 Created ${totalUsers} users and ${totalEvents} events`);
+  console.log('');
+  console.log('🔑 Static Token Authentication:');
+  console.log('   Demo User: demo-token-123 (demo@example.com)');
+  console.log('   John: john-token-456 (john@example.com)');
+  console.log('   Jane: jane-token-789 (jane@example.com)');
+  console.log('   Alice: alice-token-101 (alice@example.com)');
+  console.log('   Bob: bob-token-202 (bob@example.com)');
+  console.log('');
+  console.log('📅 Sample Events:');
+  events.forEach((event, index) => {
+    console.log(`   ${index + 1}. ${event.name} - ${event.location}`);
+  });
+  console.log('');
+  console.log('💡 Usage: Authorization: Bearer demo-token-123');
+  console.log('✅ EXACT SCHEMA COMPLIANCE + STATIC TOKEN AUTH');
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
+  .catch((e) => {
     console.error('❌ Seeding failed:', e);
-    await prisma.$disconnect();
     process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
   }); 

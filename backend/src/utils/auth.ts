@@ -26,15 +26,28 @@ export const generateToken = (user: User): string => {
     email: user.email,
   };
 
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
-  });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
+};
+
+// Static token mappings for demo purposes
+const STATIC_TOKENS: Record<string, JWTPayload> = {
+  'demo-token-123': { userId: 'demo-user-id', email: 'demo@example.com' },
+  'john-token-456': { userId: 'john-user-id', email: 'john@example.com' },
+  'jane-token-789': { userId: 'jane-user-id', email: 'jane@example.com' },
+  'alice-token-101': { userId: 'alice-user-id', email: 'alice@example.com' },
+  'bob-token-202': { userId: 'bob-user-id', email: 'bob@example.com' },
 };
 
 /**
- * Verify and decode JWT token
+ * Verify and decode JWT token or static token
  */
 export const verifyToken = (token: string): JWTPayload | null => {
+  // First, check if it's a static token
+  if (STATIC_TOKENS[token]) {
+    return STATIC_TOKENS[token];
+  }
+
+  // If not a static token, try JWT verification
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
     return decoded;

@@ -5,55 +5,46 @@ declare global {
   var __prisma: PrismaClient | undefined;
 }
 
-// Create Prisma client with optimal configuration
-const createPrismaClient = () => {
-  return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
-  });
-};
+// Singleton pattern for Prisma Client to prevent multiple instances
+const prisma = globalThis.__prisma || new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+});
 
-// Use global variable in development to prevent multiple instances
-export const prisma = globalThis.__prisma || createPrismaClient();
-
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV !== 'production') {
   globalThis.__prisma = prisma;
 }
 
-// Database connection utility
-export const connectDatabase = async (): Promise<void> => {
+// Connect to database
+async function connectDatabase() {
   try {
     await prisma.$connect();
-    console.log('✅ Database connected successfully');
-  } catch (error) {
-    console.error('❌ Database connection failed:', error);
-    process.exit(1);
-  }
-};
-
-// Database disconnection utility
-export const disconnectDatabase = async (): Promise<void> => {
-  try {
-    await prisma.$disconnect();
-    console.log('✅ Database disconnected successfully');
-  } catch (error) {
-    console.error('❌ Database disconnection failed:', error);
-  }
-};
-
-// Health check utility
-export const checkDatabaseHealth = async (): Promise<boolean> => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
+    console.log('✅ Prisma connected to database successfully');
     return true;
   } catch (error) {
-    console.error('Database health check failed:', error);
+    console.error('❌ Failed to connect to database:', error);
     return false;
   }
-};
+}
 
-export default prisma; 
+// Disconnect from database
+async function disconnectDatabase() {
+  try {
+    await prisma.$disconnect();
+    console.log('✅ Prisma disconnected from database successfully');
+  } catch (error) {
+    console.error('❌ Error disconnecting from database:', error);
+  }
+}
+
+// Health check for database
+async function checkDatabaseHealth() {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return { status: 'healthy', timestamp: new Date().toISOString() };
+  } catch (error: any) {
+    return { status: 'unhealthy', error: error.message, timestamp: new Date().toISOString() };
+  }
+}
+
+export default prisma;
+export { connectDatabase, disconnectDatabase, checkDatabaseHealth }; 

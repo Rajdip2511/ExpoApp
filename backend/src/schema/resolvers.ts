@@ -1,6 +1,5 @@
 import { GraphQLError } from 'graphql';
 import { DateTimeResolver } from 'graphql-scalars';
-import { PubSub } from 'graphql-subscriptions';
 import prisma from '../utils/database';
 import { 
   generateToken, 
@@ -12,14 +11,7 @@ import {
   isValidPassword
 } from '../utils/auth';
 import { Context, RegisterInput, LoginInput, CreateEventInput } from '../types';
-
-// PubSub instance for real-time subscriptions
-const pubsub = new PubSub();
-
-// Subscription event names
-const EVENT_UPDATED = 'EVENT_UPDATED';
-const USER_JOINED_EVENT = 'USER_JOINED_EVENT';
-const USER_LEFT_EVENT = 'USER_LEFT_EVENT';
+import { broadcastUserJoined, broadcastUserLeft } from '../socket/socketHandler';
 
 export const resolvers = {
   // Custom scalar resolvers
@@ -268,7 +260,7 @@ export const resolvers = {
 
       // Check if user is already attending
       const isAlreadyAttending = event.attendees.some(
-        attendee => attendee.id === context.user!.id
+        (attendee: any) => attendee.id === context.user!.id
       );
 
       if (isAlreadyAttending) {
@@ -299,12 +291,19 @@ export const resolvers = {
         }
       });
 
-      // Publish real-time update
-      pubsub.publish(EVENT_UPDATED, { eventUpdated: updatedEvent });
-      pubsub.publish(USER_JOINED_EVENT, { 
-        userJoinedEvent: getSafeUserData(context.user),
-        eventId 
-      });
+      // Real-time Socket.io broadcasting
+      if (context.io) {
+        broadcastUserJoined(
+          context.io, 
+          eventId, 
+          context.user, 
+          updatedEvent.attendees.length
+        );
+        
+        console.log(`✅ User ${context.user.name} joined event ${updatedEvent.name} - Broadcasting to Socket.io`);
+      } else {
+        console.log(`⚠️ User ${context.user.name} joined event ${updatedEvent.name} - No Socket.io instance available`);
+      }
 
       return updatedEvent;
     },
@@ -332,7 +331,7 @@ export const resolvers = {
 
       // Check if user is attending
       const isAttending = event.attendees.some(
-        attendee => attendee.id === context.user!.id
+        (attendee: any) => attendee.id === context.user!.id
       );
 
       if (!isAttending) {
@@ -363,35 +362,21 @@ export const resolvers = {
         }
       });
 
-      // Publish real-time update
-      pubsub.publish(EVENT_UPDATED, { eventUpdated: updatedEvent });
-      pubsub.publish(USER_LEFT_EVENT, { 
-        userLeftEvent: context.user.id,
-        eventId 
-      });
+      // Real-time Socket.io broadcasting
+      if (context.io) {
+        broadcastUserLeft(
+          context.io, 
+          eventId, 
+          context.user.id, 
+          updatedEvent.attendees.length
+        );
+        
+        console.log(`✅ User ${context.user.name} left event ${updatedEvent.name} - Broadcasting to Socket.io`);
+      } else {
+        console.log(`⚠️ User ${context.user.name} left event ${updatedEvent.name} - No Socket.io instance available`);
+      }
 
       return updatedEvent;
-    },
-  },
-
-  // Subscription resolvers
-  Subscription: {
-    eventUpdated: {
-      subscribe: (_: any, { eventId }: { eventId: string }) => {
-        return pubsub.asyncIterator([EVENT_UPDATED]);
-      }
-    },
-
-    userJoinedEvent: {
-      subscribe: (_: any, { eventId }: { eventId: string }) => {
-        return pubsub.asyncIterator([USER_JOINED_EVENT]);
-      }
-    },
-
-    userLeftEvent: {
-      subscribe: (_: any, { eventId }: { eventId: string }) => {
-        return pubsub.asyncIterator([USER_LEFT_EVENT]);
-      }
     },
   },
 

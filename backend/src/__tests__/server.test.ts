@@ -2,18 +2,23 @@ import request from 'supertest';
 import { createServer } from 'http';
 import express from 'express';
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@as-integrations/express4';
+import { expressMiddleware } from '@apollo/server/express4';
+import { Server as SocketIOServer } from 'socket.io';
+import { io } from 'socket.io-client';
 import { typeDefs } from '../schema/typeDefs';
 import { resolvers } from '../schema/resolvers';
 import { authenticateToken, createContext } from '../middleware/auth';
 import { PrismaClient } from '@prisma/client';
 import { generateToken, hashPassword } from '../utils/auth';
+import cors from 'cors';
 
-// Test database instance
+// Test database connection
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:9836280158@localhost:5432/event_checkin_db?schema=public';
+
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/event_checkin_test'
+      url: DATABASE_URL
     }
   }
 });
@@ -22,18 +27,34 @@ const prisma = new PrismaClient({
 let app: express.Application;
 let httpServer: any;
 let apollo: ApolloServer;
+let io: SocketIOServer;
+let clientSocket: any;
 
 // Test data
 let testUser: any;
+let secondTestUser: any;
 let testEvent: any;
 let authToken: string;
+let secondAuthToken: string;
+
+// Static tokens for testing
+const DEMO_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkZW1vLXVzZXItaWQiLCJlbWFpbCI6ImRlbW9AZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA1OTE0MzUsImV4cCI6NDkwNjM1MTQzNX0.uQxnMkPLzVpRvP_D2kdqKXWzHEhbF9VrmMdx1JJ5YKI";
 
 beforeAll(async () => {
   // Set up test server
   app = express();
   httpServer = createServer(app);
 
+  // Initialize Socket.io
+  io = new SocketIOServer(httpServer, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
+
   // Middleware
+  app.use(cors());
   app.use(express.json());
   app.use(authenticateToken);
 
@@ -45,52 +66,108 @@ beforeAll(async () => {
 
   await apollo.start();
 
+  // Apply GraphQL middleware with Socket.io context
   app.use('/graphql', expressMiddleware(apollo, {
-    context: createContext,
+    context: createContext(io),
   }));
 
   // Health endpoint
   app.get('/health', (req, res) => {
-    res.json({ status: 'OK' });
+    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  });
+
+  // Start server
+  httpServer.listen(4001, () => {
+    console.log('Test server running on port 4001');
   });
 });
 
 beforeEach(async () => {
-  // Clean database
-  await prisma.event.deleteMany();
-  await prisma.user.deleteMany();
+  try {
+    // Find demo user from seeded data
+    testUser = await prisma.user.findUnique({
+      where: { email: 'demo@example.com' }
+    });
+    
+    if (!testUser) {
+      testUser = await prisma.user.create({
+        data: {
+          name: 'Demo User',
+          email: 'demo@example.com',
+          password: await hashPassword('password123'),
+          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=DemoUser',
+        },
+      });
+    }
 
-  // Create test user
-  testUser = await prisma.user.create({
-    data: {
-      name: 'Test User',
-      email: 'test@example.com',
-      password: await hashPassword('password123'),
-      avatar: 'https://example.com/avatar.png',
-    },
-  });
+    // Find second user
+    secondTestUser = await prisma.user.findUnique({
+      where: { email: 'john@example.com' }
+    });
 
-  // Generate auth token
-  authToken = generateToken(testUser);
+    if (!secondTestUser) {
+      secondTestUser = await prisma.user.create({
+        data: {
+          name: 'John Smith',
+          email: 'john@example.com',
+          password: await hashPassword('password123'),
+          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JohnSmith',
+        },
+      });
+    }
 
-  // Create test event
-  testEvent = await prisma.event.create({
-    data: {
-      name: 'Test Event',
-      description: 'A test event',
-      location: 'Test Location',
-      startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-      endTime: new Date(Date.now() + 25 * 60 * 60 * 1000), // Tomorrow + 1 hour
-    },
-  });
+    // Generate auth tokens
+    authToken = generateToken(testUser);
+    secondAuthToken = generateToken(secondTestUser);
+
+    // Find or create test event
+    testEvent = await prisma.event.findFirst({
+      where: { name: 'Test Event Integration' }
+    });
+
+    if (!testEvent) {
+      testEvent = await prisma.event.create({
+        data: {
+          name: 'Test Event Integration',
+          description: 'A comprehensive test event',
+          location: 'Test Location Hub',
+          startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+          endTime: new Date(Date.now() + 25 * 60 * 60 * 1000), // Tomorrow + 1 hour
+        },
+      });
+    }
+
+    // Setup Socket.io client for testing
+    clientSocket = SocketIOClient('http://localhost:4001', {
+      auth: {
+        token: authToken
+      }
+    });
+
+    // Wait for connection
+    await new Promise((resolve) => {
+      clientSocket.on('connect', resolve);
+    });
+
+  } catch (error) {
+    console.error('Test setup error:', error);
+  }
+});
+
+afterEach(async () => {
+  if (clientSocket) {
+    clientSocket.disconnect();
+  }
 });
 
 afterAll(async () => {
-  await apollo.stop();
-  await prisma.$disconnect();
+  if (apollo) {
+    await apollo.stop();
+  }
   if (httpServer) {
     httpServer.close();
   }
+  await prisma.$disconnect();
 });
 
 describe('Health Check', () => {

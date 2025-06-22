@@ -5,13 +5,14 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@as-integrations/express4';
+import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { typeDefs } from './schema/typeDefs';
 import { resolvers } from './schema/resolvers';
 import { connectDatabase, checkDatabaseHealth } from './utils/database';
 import { authenticateToken, createContext, AuthenticatedRequest } from './middleware/auth';
 import { initializeSocket } from './socket/socketHandler';
+import startFullWorkingServer from './full-working-server';
 
 // Configuration
 const PORT = process.env.PORT || 4000;
@@ -95,7 +96,6 @@ async function startServer() {
         return error;
       },
       introspection: NODE_ENV !== 'production',
-      playground: NODE_ENV !== 'production',
     });
 
     // Start Apollo Server
@@ -105,7 +105,7 @@ async function startServer() {
     app.use(
       '/graphql',
       expressMiddleware(server, {
-        context: createContext,
+        context: createContext(io),
       })
     );
 
@@ -206,9 +206,10 @@ async function startServer() {
   }
 }
 
-// Start the server
-if (require.main === module) {
-  startServer();
-}
+// Start the full working server with Prisma
+startFullWorkingServer().catch((error) => {
+  console.error('❌ Failed to start server:', error);
+  process.exit(1);
+});
 
 export default startServer; 

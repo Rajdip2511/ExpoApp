@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import { User } from '@prisma/client';
+import { Server as SocketIOServer } from 'socket.io';
 
 // GraphQL Context Type
 export interface Context {
   user?: User;
   req: Request;
   res: Response;
+  io?: SocketIOServer;
 }
 
 // Authentication Types
