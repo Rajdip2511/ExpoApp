@@ -34,7 +34,7 @@ A full-stack real-time event engagement platform built with **React Native Expo*
 
 ### **1. Clone and Setup**
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Rajdip2511/ExpoApp.git
 cd NativeExpo
 ```
 
