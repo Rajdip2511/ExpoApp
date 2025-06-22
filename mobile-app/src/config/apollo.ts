@@ -35,4 +35,9 @@ export const apolloClient = new ApolloClient({
       errorPolicy: 'all',
     },
   },
-}); 
+});
+
+// Function to clear Apollo cache (useful for logout)
+export const clearApolloCache = () => {
+  apolloClient.clearStore();
+}; 

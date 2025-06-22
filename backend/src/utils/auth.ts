@@ -7,7 +7,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  password: string;
+  password: string | null;
   avatar?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -68,7 +68,8 @@ export const hashPassword = async (password: string): Promise<string> => {
 /**
  * Compare password with hash
  */
-export const comparePassword = async (password: string, hash: string): Promise<boolean> => {
+export const comparePassword = async (password: string, hash: string | null): Promise<boolean> => {
+  if (!hash) return false;
   return bcrypt.compare(password, hash);
 };
 

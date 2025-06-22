@@ -48,13 +48,14 @@ const authenticateToken = async (req, res, next) => {
 };
 exports.authenticateToken = authenticateToken;
 /**
- * Create GraphQL context with authenticated user
+ * Create GraphQL context with authenticated user and Socket.io server
  */
-const createContext = ({ req, res }) => {
+const createContext = (io) => async ({ req, res }) => {
     return {
         user: req.user,
         req,
         res,
+        io, // Include Socket.io server instance
     };
 };
 exports.createContext = createContext;

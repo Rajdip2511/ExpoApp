@@ -1,56 +1,46 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkDatabaseHealth = exports.disconnectDatabase = exports.connectDatabase = exports.prisma = void 0;
-const client_1 = require("@prisma/client");
-// Create Prisma client with optimal configuration
-const createPrismaClient = () => {
-    return new client_1.PrismaClient({
-        log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-        datasources: {
-            db: {
-                url: process.env.DATABASE_URL,
-            },
-        },
-    });
-};
-// Use global variable in development to prevent multiple instances
-exports.prisma = globalThis.__prisma || createPrismaClient();
-if (process.env.NODE_ENV === 'development') {
-    globalThis.__prisma = exports.prisma;
-}
-// Database connection utility
-const connectDatabase = async () => {
-    try {
-        await exports.prisma.$connect();
-        console.log('✅ Database connected successfully');
-    }
-    catch (error) {
-        console.error('❌ Database connection failed:', error);
-        process.exit(1);
-    }
-};
 exports.connectDatabase = connectDatabase;
-// Database disconnection utility
-const disconnectDatabase = async () => {
-    try {
-        await exports.prisma.$disconnect();
-        console.log('✅ Database disconnected successfully');
-    }
-    catch (error) {
-        console.error('❌ Database disconnection failed:', error);
-    }
-};
 exports.disconnectDatabase = disconnectDatabase;
-// Health check utility
-const checkDatabaseHealth = async () => {
+exports.checkDatabaseHealth = checkDatabaseHealth;
+const client_1 = require("@prisma/client");
+// Singleton pattern for Prisma Client to prevent multiple instances
+const prisma = globalThis.__prisma || new client_1.PrismaClient({
+    log: ['query', 'info', 'warn', 'error'],
+});
+if (process.env.NODE_ENV !== 'production') {
+    globalThis.__prisma = prisma;
+}
+// Connect to database
+async function connectDatabase() {
     try {
-        await exports.prisma.$queryRaw `SELECT 1`;
+        await prisma.$connect();
+        console.log('✅ Prisma connected to database successfully');
         return true;
     }
     catch (error) {
-        console.error('Database health check failed:', error);
+        console.error('❌ Failed to connect to database:', error);
         return false;
     }
-};
-exports.checkDatabaseHealth = checkDatabaseHealth;
-exports.default = exports.prisma;
+}
+// Disconnect from database
+async function disconnectDatabase() {
+    try {
+        await prisma.$disconnect();
+        console.log('✅ Prisma disconnected from database successfully');
+    }
+    catch (error) {
+        console.error('❌ Error disconnecting from database:', error);
+    }
+}
+// Health check for database
+async function checkDatabaseHealth() {
+    try {
+        await prisma.$queryRaw `SELECT 1`;
+        return { status: 'healthy', timestamp: new Date().toISOString() };
+    }
+    catch (error) {
+        return { status: 'unhealthy', error: error.message, timestamp: new Date().toISOString() };
+    }
+}
+exports.default = prisma;

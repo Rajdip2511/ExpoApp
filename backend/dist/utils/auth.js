@@ -17,15 +17,26 @@ const generateToken = (user) => {
         userId: user.id,
         email: user.email,
     };
-    return jsonwebtoken_1.default.sign(payload, JWT_SECRET, {
-        expiresIn: JWT_EXPIRES_IN,
-    });
+    return jsonwebtoken_1.default.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 };
 exports.generateToken = generateToken;
+// Static token mappings for demo purposes
+const STATIC_TOKENS = {
+    'demo-token-123': { userId: 'demo-user-id', email: 'demo@example.com' },
+    'john-token-456': { userId: 'john-user-id', email: 'john@example.com' },
+    'jane-token-789': { userId: 'jane-user-id', email: 'jane@example.com' },
+    'alice-token-101': { userId: 'alice-user-id', email: 'alice@example.com' },
+    'bob-token-202': { userId: 'bob-user-id', email: 'bob@example.com' },
+};
 /**
- * Verify and decode JWT token
+ * Verify and decode JWT token or static token
  */
 const verifyToken = (token) => {
+    // First, check if it's a static token
+    if (STATIC_TOKENS[token]) {
+        return STATIC_TOKENS[token];
+    }
+    // If not a static token, try JWT verification
     try {
         const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
         return decoded;
@@ -48,6 +59,8 @@ exports.hashPassword = hashPassword;
  * Compare password with hash
  */
 const comparePassword = async (password, hash) => {
+    if (!hash)
+        return false;
     return bcryptjs_1.default.compare(password, hash);
 };
 exports.comparePassword = comparePassword;

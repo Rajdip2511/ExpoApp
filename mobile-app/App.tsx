@@ -28,9 +28,15 @@ export default function App() {
   
   const { isAuthenticated, isLoading, loadAuth } = useAuthStore();
 
-  // Load authentication state on app start
+  // Load authentication state on app start and clear old tokens
   useEffect(() => {
-    loadAuth();
+    const initAuth = async () => {
+      // Force clear any existing authentication to ensure fresh login with new tokens
+      const { logout } = useAuthStore.getState();
+      await logout();
+      await loadAuth();
+    };
+    initAuth();
   }, [loadAuth]);
 
   // Navigate to events screen when authenticated

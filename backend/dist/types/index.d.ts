@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
 import { User } from '@prisma/client';
+import { Server as SocketIOServer } from 'socket.io';
 export interface Context {
     user?: User;
     req: Request;
     res: Response;
+    io?: SocketIOServer;
 }
 export interface JWTPayload {
     userId: string;

@@ -6,62 +6,62 @@ export declare const resolvers: {
         me: (_: any, __: any, context: Context) => Promise<Omit<import("../utils/auth").User, "password">>;
         events: () => Promise<({
             attendees: {
-                name: string;
                 id: string;
-                email: string;
-                avatar: string | null;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                email: string;
+                avatar: string | null;
             }[];
         } & {
-            name: string;
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             description: string | null;
+            name: string;
             location: string;
             startTime: Date;
             endTime: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
         })[]>;
         event: (_: any, { id }: {
             id: string;
         }) => Promise<{
             attendees: {
-                name: string;
                 id: string;
-                email: string;
-                avatar: string | null;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                email: string;
+                avatar: string | null;
             }[];
         } & {
-            name: string;
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             description: string | null;
+            name: string;
             location: string;
             startTime: Date;
             endTime: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
         }>;
         myEvents: (_: any, __: any, context: Context) => Promise<({
             attendees: {
-                name: string;
                 id: string;
-                email: string;
-                avatar: string | null;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                email: string;
+                avatar: string | null;
             }[];
         } & {
-            name: string;
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             description: string | null;
+            name: string;
             location: string;
             startTime: Date;
             endTime: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
         })[]>;
     };
     Mutation: {
@@ -81,82 +81,65 @@ export declare const resolvers: {
             input: CreateEventInput;
         }, context: Context) => Promise<{
             attendees: {
-                name: string;
                 id: string;
-                email: string;
-                avatar: string | null;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                email: string;
+                avatar: string | null;
             }[];
         } & {
-            name: string;
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             description: string | null;
+            name: string;
             location: string;
             startTime: Date;
             endTime: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
         }>;
         joinEvent: (_: any, { eventId }: {
             eventId: string;
         }, context: Context) => Promise<{
             attendees: {
-                name: string;
                 id: string;
-                email: string;
-                avatar: string | null;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                email: string;
+                avatar: string | null;
             }[];
         } & {
-            name: string;
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             description: string | null;
+            name: string;
             location: string;
             startTime: Date;
             endTime: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
         }>;
         leaveEvent: (_: any, { eventId }: {
             eventId: string;
         }, context: Context) => Promise<{
             attendees: {
-                name: string;
                 id: string;
-                email: string;
-                avatar: string | null;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                email: string;
+                avatar: string | null;
             }[];
         } & {
-            name: string;
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             description: string | null;
+            name: string;
             location: string;
             startTime: Date;
             endTime: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
         }>;
-    };
-    Subscription: {
-        eventUpdated: {
-            subscribe: (_: any, { eventId }: {
-                eventId: string;
-            }) => any;
-        };
-        userJoinedEvent: {
-            subscribe: (_: any, { eventId }: {
-                eventId: string;
-            }) => any;
-        };
-        userLeftEvent: {
-            subscribe: (_: any, { eventId }: {
-                eventId: string;
-            }) => any;
-        };
     };
     Event: {
         attendeeCount: (parent: any) => any;
@@ -164,22 +147,22 @@ export declare const resolvers: {
     User: {
         events: (parent: any) => Promise<({
             attendees: {
-                name: string;
                 id: string;
-                email: string;
-                avatar: string | null;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                email: string;
+                avatar: string | null;
             }[];
         } & {
-            name: string;
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             description: string | null;
+            name: string;
             location: string;
             startTime: Date;
             endTime: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
         })[]>;
     };
 };

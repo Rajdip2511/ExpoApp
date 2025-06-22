@@ -1,0 +1,15 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./backend"
+    },
+    {
+      "path": "./mobile-app"
+    }
+  ],
+  "compilerOptions": {
+    "strict": true,
+    "skipLibCheck": true
+  }
+} 

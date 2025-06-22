@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { Server as SocketIOServer } from 'socket.io';
 import { Context } from '../types';
 export interface AuthenticatedRequest extends Request {
     user?: any;
@@ -8,12 +9,12 @@ export interface AuthenticatedRequest extends Request {
  */
 export declare const authenticateToken: (req: AuthenticatedRequest, res: Response, next: NextFunction) => Promise<void>;
 /**
- * Create GraphQL context with authenticated user
+ * Create GraphQL context with authenticated user and Socket.io server
  */
-export declare const createContext: ({ req, res }: {
+export declare const createContext: (io?: SocketIOServer) => ({ req, res }: {
     req: AuthenticatedRequest;
     res: Response;
-}) => Context;
+}) => Promise<Context>;
 /**
  * Middleware to require authentication
  */

@@ -6,15 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolvers = void 0;
 const graphql_1 = require("graphql");
 const graphql_scalars_1 = require("graphql-scalars");
-const graphql_subscriptions_1 = require("graphql-subscriptions");
 const database_1 = __importDefault(require("../utils/database"));
 const auth_1 = require("../utils/auth");
-// PubSub instance for real-time subscriptions
-const pubsub = new graphql_subscriptions_1.PubSub();
-// Subscription event names
-const EVENT_UPDATED = 'EVENT_UPDATED';
-const USER_JOINED_EVENT = 'USER_JOINED_EVENT';
-const USER_LEFT_EVENT = 'USER_LEFT_EVENT';
+const socketHandler_1 = require("../socket/socketHandler");
 exports.resolvers = {
     // Custom scalar resolvers
     DateTime: graphql_scalars_1.DateTimeResolver,
@@ -230,7 +224,7 @@ exports.resolvers = {
                 });
             }
             // Check if user is already attending
-            const isAlreadyAttending = event.attendees.some(attendee => attendee.id === context.user.id);
+            const isAlreadyAttending = event.attendees.some((attendee) => attendee.id === context.user.id);
             if (isAlreadyAttending) {
                 throw new graphql_1.GraphQLError('You are already attending this event', {
                     extensions: { code: 'ALREADY_ATTENDING' }
@@ -257,12 +251,14 @@ exports.resolvers = {
                     }
                 }
             });
-            // Publish real-time update
-            pubsub.publish(EVENT_UPDATED, { eventUpdated: updatedEvent });
-            pubsub.publish(USER_JOINED_EVENT, {
-                userJoinedEvent: (0, auth_1.getSafeUserData)(context.user),
-                eventId
-            });
+            // Real-time Socket.io broadcasting
+            if (context.io) {
+                (0, socketHandler_1.broadcastUserJoined)(context.io, eventId, context.user, updatedEvent.attendees.length);
+                console.log(`✅ User ${context.user.name} joined event ${updatedEvent.name} - Broadcasting to Socket.io`);
+            }
+            else {
+                console.log(`⚠️ User ${context.user.name} joined event ${updatedEvent.name} - No Socket.io instance available`);
+            }
             return updatedEvent;
         },
         leaveEvent: async (_, { eventId }, context) => {
@@ -284,7 +280,7 @@ exports.resolvers = {
                 });
             }
             // Check if user is attending
-            const isAttending = event.attendees.some(attendee => attendee.id === context.user.id);
+            const isAttending = event.attendees.some((attendee) => attendee.id === context.user.id);
             if (!isAttending) {
                 throw new graphql_1.GraphQLError('You are not attending this event', {
                     extensions: { code: 'NOT_ATTENDING' }
@@ -311,31 +307,15 @@ exports.resolvers = {
                     }
                 }
             });
-            // Publish real-time update
-            pubsub.publish(EVENT_UPDATED, { eventUpdated: updatedEvent });
-            pubsub.publish(USER_LEFT_EVENT, {
-                userLeftEvent: context.user.id,
-                eventId
-            });
+            // Real-time Socket.io broadcasting
+            if (context.io) {
+                (0, socketHandler_1.broadcastUserLeft)(context.io, eventId, context.user.id, updatedEvent.attendees.length);
+                console.log(`✅ User ${context.user.name} left event ${updatedEvent.name} - Broadcasting to Socket.io`);
+            }
+            else {
+                console.log(`⚠️ User ${context.user.name} left event ${updatedEvent.name} - No Socket.io instance available`);
+            }
             return updatedEvent;
-        },
-    },
-    // Subscription resolvers
-    Subscription: {
-        eventUpdated: {
-            subscribe: (_, { eventId }) => {
-                return pubsub.asyncIterator([EVENT_UPDATED]);
-            }
-        },
-        userJoinedEvent: {
-            subscribe: (_, { eventId }) => {
-                return pubsub.asyncIterator([USER_JOINED_EVENT]);
-            }
-        },
-        userLeftEvent: {
-            subscribe: (_, { eventId }) => {
-                return pubsub.asyncIterator([USER_LEFT_EVENT]);
-            }
         },
     },
     // Field resolvers

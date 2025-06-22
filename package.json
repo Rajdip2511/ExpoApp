@@ -1,0 +1,55 @@
+{
+  "name": "event-checkin-app",
+  "version": "1.0.0",
+  "description": "Real-Time Event Check-In App - Full Stack React Native + Node.js",
+  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "mobile-app"
+  ],
+  "scripts": {
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd backend && npm run dev",
+    "start:frontend": "cd mobile-app && npm start",
+    "start:web": "cd mobile-app && npx expo start --web",
+    "start:android": "cd mobile-app && npx expo start --android",
+    "start:ios": "cd mobile-app && npx expo start --ios",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd mobile-app && npx expo build",
+    "install:all": "npm install && cd backend && npm install && cd ../mobile-app && npm install",
+    "clean": "rm -rf node_modules backend/node_modules mobile-app/node_modules backend/dist",
+    "test:backend": "cd backend && npm test",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "type-check": "npm run type-check:backend && npm run type-check:frontend",
+    "type-check:backend": "cd backend && npx tsc --noEmit",
+    "type-check:frontend": "cd mobile-app && npx tsc --noEmit"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "nodejs",
+    "graphql",
+    "socketio",
+    "real-time",
+    "event-management",
+    "full-stack"
+  ],
+  "author": "Rajdip",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Rajdip2511/ExpoApp.git"
+  }
+} 

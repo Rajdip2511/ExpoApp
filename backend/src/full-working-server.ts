@@ -12,29 +12,14 @@ import prisma, { connectDatabase, disconnectDatabase, checkDatabaseHealth } from
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 
-// Pre-generated Static JWT Tokens (As per requirements)
-const generateStaticTokens = () => {
-  const users = [
-    { userId: 'demo-user-id', email: 'demo@example.com', name: 'Demo User' },
-    { userId: 'john-user-id', email: 'john@example.com', name: 'John Smith' },
-    { userId: 'jane-user-id', email: 'jane@example.com', name: 'Jane Doe' },
-    { userId: 'alice-user-id', email: 'alice@example.com', name: 'Alice Johnson' },
-    { userId: 'bob-user-id', email: 'bob@example.com', name: 'Bob Wilson' },
-  ];
-
-  return users.reduce((tokens, user) => {
-    // Generate JWT token that never expires (static)
-    const token = jwt.sign(
-      { userId: user.userId, email: user.email },
-      JWT_SECRET,
-      { expiresIn: '100y' } // Effectively never expires
-    );
-    tokens[user.name.toLowerCase().replace(' ', '')] = token;
-    return tokens;
-  }, {} as Record<string, string>);
+// Static Token Mappings (Exact match with frontend)
+const STATIC_JWT_TOKENS: Record<string, any> = {
+  'demo-token-123': { userId: 'demo-user-id', email: 'demo@example.com', name: 'Demo User' },
+  'john-token-456': { userId: 'john-user-id', email: 'john@example.com', name: 'John Smith' },
+  'jane-token-789': { userId: 'jane-user-id', email: 'jane@example.com', name: 'Jane Doe' },
+  'alice-token-101': { userId: 'alice-user-id', email: 'alice@example.com', name: 'Alice Johnson' },
+  'bob-token-202': { userId: 'bob-user-id', email: 'bob@example.com', name: 'Bob Wilson' },
 };
-
-const STATIC_JWT_TOKENS = generateStaticTokens();
 
 // GraphQL Schema - Exact compliance with requirements
 const typeDefs = `#graphql
@@ -86,8 +71,14 @@ const typeDefs = `#graphql
   }
 `;
 
-// JWT Token verification
+// Static Token verification (Frontend compatibility)
 const verifyToken = (token: string) => {
+  // Check static tokens first
+  if (STATIC_JWT_TOKENS[token]) {
+    return STATIC_JWT_TOKENS[token];
+  }
+  
+  // Fallback to JWT verification
   try {
     return jwt.verify(token, JWT_SECRET);
   } catch {
@@ -403,27 +394,60 @@ async function startFullWorkingServer() {
       }
     });
 
-    // Socket.io connection handling
-    io.on('connection', (socket) => {
-      console.log(`👤 User connected: ${socket.id}`);
+    // Socket.io connection handling with authentication
+    io.use((socket: any, next) => {
+      const token = socket.handshake.auth.token;
+      if (token) {
+        const decoded = verifyToken(token);
+        if (decoded) {
+          socket.userId = decoded.userId;
+          socket.userEmail = decoded.email;
+          next();
+        } else {
+          next(new Error('Authentication error'));
+        }
+      } else {
+        next(new Error('No token provided'));
+      }
+    });
+
+    io.on('connection', (socket: any) => {
+      console.log(`👤 User connected: ${socket.userEmail} (${socket.id})`);
       
       socket.on('join-event', (eventId: string) => {
         socket.join(`event-${eventId}`);
-        console.log(`👥 User ${socket.id} joined event ${eventId}`);
+        console.log(`👥 User ${socket.userEmail} joined event ${eventId}`);
+        
+        // Broadcast to others in the room
+        socket.to(`event-${eventId}`).emit('user-joined-room', {
+          eventId,
+          userId: socket.userId,
+          email: socket.userEmail
+        });
       });
 
       socket.on('leave-event', (eventId: string) => {
         socket.leave(`event-${eventId}`);
-        console.log(`👋 User ${socket.id} left event ${eventId}`);
+        console.log(`👋 User ${socket.userEmail} left event ${eventId}`);
+        
+        // Broadcast to others in the room
+        socket.to(`event-${eventId}`).emit('user-left-room', {
+          eventId,
+          userId: socket.userId,
+          email: socket.userEmail
+        });
       });
 
       socket.on('disconnect', () => {
-        console.log(`👤 User disconnected: ${socket.id}`);
+        console.log(`👤 User disconnected: ${socket.userEmail} (${socket.id})`);
       });
     });
 
     // Middleware
-    app.use(cors());
+    app.use(cors({
+      origin: process.env.FRONTEND_URL || "http://localhost:8081",
+      credentials: true
+    }));
     app.use(express.json());
 
     // JWT Authentication Middleware (with static tokens)
@@ -503,8 +527,8 @@ async function startFullWorkingServer() {
         message: 'Schema-compliant backend with JWT static tokens ready!',
         staticJWTTokens: STATIC_JWT_TOKENS,
         usage: {
-          header: `Authorization: Bearer ${STATIC_JWT_TOKENS.demouser}`,
-          example: `curl -H "Authorization: Bearer ${STATIC_JWT_TOKENS.demouser}" http://localhost:4000/graphql`
+          header: `Authorization: Bearer demo-token-123`,
+          example: `curl -H "Authorization: Bearer demo-token-123" http://localhost:4000/graphql`
         }
       });
     });
@@ -520,11 +544,11 @@ async function startFullWorkingServer() {
       console.log('🎉 READY FOR FRONTEND DEVELOPMENT!');
       console.log('');
       console.log('🔑 Static JWT Tokens Available:');
-      console.log(`   Demo User: ${STATIC_JWT_TOKENS.demouser}`);
-      console.log(`   John: ${STATIC_JWT_TOKENS.johnsmith}`);
-      console.log(`   Jane: ${STATIC_JWT_TOKENS.janedoe}`);
-      console.log(`   Alice: ${STATIC_JWT_TOKENS.alicejohnson}`);
-      console.log(`   Bob: ${STATIC_JWT_TOKENS.bobwilson}`);
+      console.log(`   Demo User: demo-token-123`);
+      console.log(`   John: john-token-456`);
+      console.log(`   Jane: jane-token-789`);
+      console.log(`   Alice: alice-token-101`);
+      console.log(`   Bob: bob-token-202`);
       console.log('');
       console.log('💡 Usage: Authorization: Bearer <jwt-token>');
     });

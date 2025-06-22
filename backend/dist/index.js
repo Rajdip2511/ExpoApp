@@ -10,13 +10,14 @@ const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const server_1 = require("@apollo/server");
-const express4_1 = require("@as-integrations/express4");
+const express4_1 = require("@apollo/server/express4");
 const drainHttpServer_1 = require("@apollo/server/plugin/drainHttpServer");
 const typeDefs_1 = require("./schema/typeDefs");
 const resolvers_1 = require("./schema/resolvers");
 const database_1 = require("./utils/database");
 const auth_1 = require("./middleware/auth");
 const socketHandler_1 = require("./socket/socketHandler");
+const full_working_server_1 = __importDefault(require("./full-working-server"));
 // Configuration
 const PORT = process.env.PORT || 4000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -85,13 +86,12 @@ async function startServer() {
                 return error;
             },
             introspection: NODE_ENV !== 'production',
-            playground: NODE_ENV !== 'production',
         });
         // Start Apollo Server
         await server.start();
         // Apply GraphQL middleware
         app.use('/graphql', (0, express4_1.expressMiddleware)(server, {
-            context: auth_1.createContext,
+            context: (0, auth_1.createContext)(io),
         }));
         // Health check endpoint
         app.get('/health', async (req, res) => {
@@ -180,8 +180,9 @@ async function startServer() {
         process.exit(1);
     }
 }
-// Start the server
-if (require.main === module) {
-    startServer();
-}
+// Start the full working server with Prisma
+(0, full_working_server_1.default)().catch((error) => {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+});
 exports.default = startServer;

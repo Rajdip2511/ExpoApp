@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { clearApolloCache } from '../config/apollo';
 
 interface User {
   id: string;
@@ -46,6 +47,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     try {
       await AsyncStorage.multiRemove(['auth_token', 'user_data']);
+      
+      // Clear Apollo cache to remove any cached authenticated queries
+      clearApolloCache();
       
       set({
         user: null,

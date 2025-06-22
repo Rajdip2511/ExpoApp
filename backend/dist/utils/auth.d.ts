@@ -3,7 +3,7 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    password: string;
+    password: string | null;
     avatar?: string | null;
     createdAt: Date;
     updatedAt: Date;
@@ -13,7 +13,7 @@ export interface User {
  */
 export declare const generateToken: (user: User) => string;
 /**
- * Verify and decode JWT token
+ * Verify and decode JWT token or static token
  */
 export declare const verifyToken: (token: string) => JWTPayload | null;
 /**
@@ -23,7 +23,7 @@ export declare const hashPassword: (password: string) => Promise<string>;
 /**
  * Compare password with hash
  */
-export declare const comparePassword: (password: string, hash: string) => Promise<boolean>;
+export declare const comparePassword: (password: string, hash: string | null) => Promise<boolean>;
 /**
  * Extract token from Authorization header
  */

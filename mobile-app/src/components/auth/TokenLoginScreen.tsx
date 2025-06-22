@@ -18,13 +18,13 @@ interface TokenLoginScreenProps {
   onNavigateToRegister?: () => void;
 }
 
-// JWT tokens from backend (current server session - updated)
+// Static tokens matching backend configuration (FIXED)
 const DEMO_USERS = [
   {
     id: 'demo-user-id',
     name: 'Demo User',
     email: 'demo@example.com',
-    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkZW1vLXVzZXItaWQiLCJlbWFpbCI6ImRlbW9AZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA2MDExMzQsImV4cCI6NDkwNjM2MTEzNH0.0srOA-MLfjQqxHfd5SH46jvQfMz2TkcDSHqfYZtJNLo',
+    token: 'demo-token-123',
     avatar: 'https://ui-avatars.com/api/?name=Demo+User&background=6200ea&color=fff',
     role: 'Demo Account'
   },
@@ -32,7 +32,7 @@ const DEMO_USERS = [
     id: 'john-user-id', 
     name: 'John Smith',
     email: 'john@example.com',
-    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJqb2huLXVzZXItaWQiLCJlbWFpbCI6ImpvaG5AZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA2MDExMzQsImV4cCI6NDkwNjM2MTEzNH0.VaBWmsTqicpyEPX7qntKwOguNkeE_Td87VgMFs2mu4o',
+    token: 'john-token-456',
     avatar: 'https://ui-avatars.com/api/?name=John+Smith&background=1976d2&color=fff',
     role: 'Developer'
   },
@@ -40,7 +40,7 @@ const DEMO_USERS = [
     id: 'jane-user-id',
     name: 'Jane Doe', 
     email: 'jane@example.com',
-    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJqYW5lLXVzZXItaWQiLCJlbWFpbCI6ImphbmVAZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA2MDExMzQsImV4cCI6NDkwNjM2MTEzNH0.8medRmbhGO_vKKBRDv8zAYmSRo8ruGsIQixyuhtVwRw',
+    token: 'jane-token-789',
     avatar: 'https://ui-avatars.com/api/?name=Jane+Doe&background=388e3c&color=fff',
     role: 'Designer'
   },
@@ -48,7 +48,7 @@ const DEMO_USERS = [
     id: 'alice-user-id',
     name: 'Alice Johnson',
     email: 'alice@example.com', 
-    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhbGljZS11c2VyLWlkIiwiZW1haWwiOiJhbGljZUBleGFtcGxlLmNvbSIsImlhdCI6MTc1MDYwMTEzNCwiZXhwIjo0OTA2MzYxMTM0fQ.KHWX37p8T100Xv47uHfDgj9T0Mv8RfHiLiBugWrEFIQ',
+    token: 'alice-token-101',
     avatar: 'https://ui-avatars.com/api/?name=Alice+Johnson&background=f57c00&color=fff',
     role: 'Product Manager'
   },
@@ -56,7 +56,7 @@ const DEMO_USERS = [
     id: 'bob-user-id',
     name: 'Bob Wilson',
     email: 'bob@example.com',
-    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJib2ItdXNlci1pZCIsImVtYWlsIjoiYm9iQGV4YW1wbGUuY29tIiwiaWF0IjoxNzUwNjAxMTM0LCJleHAiOjQ5MDYzNjExMzR9.0NnBCtv5FbuMzgDSSHg5lqQ2hr2h9vDI7b4fPx15YEU', 
+    token: 'bob-token-202', 
     avatar: 'https://ui-avatars.com/api/?name=Bob+Wilson&background=7b1fa2&color=fff',
     role: 'QA Engineer'
   }
