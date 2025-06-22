@@ -460,8 +460,14 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({
         onDismiss={() => setSnackbarVisible(false)}
         duration={3000}
         style={styles.snackbar}
+        theme={{
+          colors: {
+            surface: '#4CAF50',
+            onSurface: '#FFFFFF',
+          }
+        }}
       >
-        {snackbarMessage}
+        <Text style={styles.snackbarText}>{snackbarMessage}</Text>
       </Snackbar>
     </View>
   );
@@ -676,6 +682,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#6200ea',
   },
   snackbar: {
-    backgroundColor: '#323232',
+    backgroundColor: '#4CAF50', // Light green background
+    borderRadius: 8,
+    elevation: 6,
+  },
+  snackbarText: {
+    color: '#FFFFFF', // White text for better contrast
+    fontSize: 16,
+    fontWeight: '500',
   },
 }); 
