@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Dimensions, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Dimensions, Alert, TouchableOpacity } from 'react-native';
 import { 
   Appbar, 
   Card, 
@@ -17,10 +17,12 @@ import {
   IconButton,
   Snackbar
 } from 'react-native-paper';
+import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_EVENT, JOIN_EVENT, LEAVE_EVENT } from '../../graphql/queries';
 import { useAuthStore } from '../../stores/authStore';
 import { io, Socket } from 'socket.io-client';
+import { ChatModal } from './ChatModal';
 
 const { width } = Dimensions.get('window');
 
@@ -54,6 +56,7 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({
   const [onlineCount, setOnlineCount] = useState(0);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [chatModalVisible, setChatModalVisible] = useState(false);
   const { user, token } = useAuthStore();
 
   const { data, loading, error, refetch } = useQuery(GET_EVENT, {
@@ -99,7 +102,22 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({
 
     newSocket.on('connect', () => {
       console.log('🟢 Connected to event room');
+      console.log('🔑 Token being used:', token);
       newSocket.emit('join-event', eventId);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('❌ Socket connection error:', error);
+      console.error('❌ Error details:', error.message);
+      showSnackbar(`Chat connection failed: ${error.message}`);
+    });
+
+    newSocket.on('disconnect', (reason) => {
+      console.log('🔴 Disconnected from event room:', reason);
+      if (reason === 'io server disconnect') {
+        // Server disconnected the socket, try to reconnect
+        newSocket.connect();
+      }
     });
 
     newSocket.on('event-state', (data) => {
@@ -137,9 +155,7 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({
       }
     });
 
-    newSocket.on('disconnect', () => {
-      console.log('🔴 Disconnected from event room');
-    });
+
 
     setSocket(newSocket);
 
@@ -425,6 +441,36 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({
         </Card>
       </ScrollView>
 
+      {/* Floating Chat Button - Only show if user is attending */}
+      {isAttending && (
+        <View style={styles.floatingChatButton}>
+          <TouchableOpacity
+            onPress={() => setChatModalVisible(true)}
+            style={[
+              styles.chatButton,
+              { backgroundColor: socket?.connected ? '#8B5CF6' : '#9CA3AF' }
+            ]}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="chatbubbles" size={24} color="white" />
+            {!socket?.connected && (
+              <View style={styles.disconnectedIndicator}>
+                <Text style={styles.disconnectedText}>!</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Chat Modal */}
+      <ChatModal
+        visible={chatModalVisible}
+        onClose={() => setChatModalVisible(false)}
+        eventId={eventId}
+        eventName={event.name}
+        socket={socket}
+      />
+
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
@@ -671,5 +717,46 @@ const styles = StyleSheet.create({
     color: '#FFFFFF', // White text for better contrast
     fontSize: 16,
     fontWeight: '500',
+  },
+  floatingChatButton: {
+    position: 'absolute',
+    bottom: 80,
+    right: 20,
+    zIndex: 1000,
+  },
+  chatButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#8B5CF6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    position: 'relative',
+  },
+  disconnectedIndicator: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  disconnectedText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
  }); 

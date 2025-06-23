@@ -416,7 +416,8 @@ async function startFullWorkingServer() {
       
       socket.on('join-event', (eventId: string) => {
         socket.join(`event-${eventId}`);
-        console.log(`👥 User ${socket.userEmail} joined event ${eventId}`);
+        console.log(`👥 User ${socket.userEmail} joined event room: event-${eventId}`);
+        console.log(`🏠 Socket ${socket.id} is now in rooms:`, Array.from(socket.rooms));
         
         // Broadcast to others in the room
         socket.to(`event-${eventId}`).emit('user-joined-room', {
@@ -436,6 +437,27 @@ async function startFullWorkingServer() {
           userId: socket.userId,
           email: socket.userEmail
         });
+      });
+
+      // Chat functionality for events
+      socket.on('send-message', (data: { eventId: string; message: string; userName: string }) => {
+        const { eventId, message, userName } = data;
+        console.log(`💬 Chat message in event ${eventId} from ${userName}: ${message}`);
+        console.log(`📡 Broadcasting to room: event-${eventId}`);
+        
+        // Create message object
+        const messageData = {
+          id: Date.now().toString(),
+          eventId,
+          message,
+          userName,
+          userId: socket.userId,
+          timestamp: new Date().toISOString(),
+        };
+        
+        // Broadcast message to all users in the event room (including sender)
+        io.to(`event-${eventId}`).emit('new-message', messageData);
+        console.log(`✅ Message broadcasted:`, messageData);
       });
 
       socket.on('disconnect', () => {
